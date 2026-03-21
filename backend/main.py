@@ -4,6 +4,10 @@ from pydantic import BaseModel
 from model_utils import analyze_text, scrape_headline_from_url
 
 app = FastAPI(title="Clickbait Detector API")
+origins = [
+    "https://clickbait-detection-system-your-name.vercel.app", # Add your Vercel URL here
+    "http://localhost:3000",
+]
 
 # Enable CORS for React (Port 3000)
 app.add_middleware(
