@@ -37,7 +37,7 @@ function App() {
     setError(null);
     try {
       const isUrl = input.trim().startsWith('http');
-      const response = await fetch(`http://127.0.0.1:8000${isUrl ? '/analyze-url' : '/predict'}`, {
+      const response = await fetch("https://clickbait-detector-api-uxg6.onrender.com/predict", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(isUrl ? { url: input.trim() } : { headline: input.trim() }),
