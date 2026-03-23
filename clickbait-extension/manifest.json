@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "Neural Clickbait Detector",
   "version": "1.0",
-  "permissions": ["activeTab"],
-  "action": {
-    "default_popup": "popup.html"
-  },
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://clickbait-detector-api-uxg6.onrender.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://twitter.com/*", "https://x.com/*", "https://www.google.com/search*"],
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
       "js": ["content.js"]
     }
   ]
