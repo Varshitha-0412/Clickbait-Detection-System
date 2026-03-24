@@ -1,49 +1,53 @@
-// Function to scan for headlines
-async function scanHeadlines() {
-  const headlines = document.querySelectorAll('[data-testid="tweetText"]');
+async function processHeadline(el) {
+  const headlineText = el.innerText.trim();
+  if (!headlineText || headlineText.length < 5) return;
 
-  headlines.forEach(async (el) => {
-    if (el.dataset.scanned) return;
-    el.dataset.scanned = "true";
+  try {
+    // 1. Call your Flask API (Update the URL to your Render/Production URL)
+    const response = await fetch('https://your-api-url.render.com/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ headline: headlineText })
+    });
 
-    const text = el.innerText;
+    const data = await response.json();
 
-    try {
-      // Connect to your LIVE Render Backend
-      // Replace lines 13-20 in your code with this:
-chrome.runtime.sendMessage({ action: "predict", text: text }, (response) => {
-  if (response && response.success) {
-    const data = response.data;
     if (data.is_clickbait) {
-       // Apply your red glow styles here...
+      // 🚩 CLICKBAIT DETECTED
+      el.style.filter = "blur(4px) grayscale(100%)";
+      el.style.opacity = "0.6";
+      el.style.transition = "all 0.3s ease";
+      el.title = `Clickbait Probability: ${Math.round(data.probability * 100)}% - Click to reveal`;
+
+      // Update Chrome Storage Counter
+      chrome.storage.local.get(['baitBlocked'], (result) => {
+        let count = result.baitBlocked || 0;
+        let newCount = count + 1;
+        chrome.storage.local.set({ baitBlocked: newCount });
+
+        // Update the extension badge text (optional but professional)
+        chrome.action.setBadgeText({ text: newCount.toString() });
+        chrome.action.setBadgeBackgroundColor({ color: '#ef4444' });
+      });
+
+    } else {
+      // 🛡️ SAFE CONTENT
+      el.style.borderLeft = "4px solid #22d3ee"; // Subtle Cyan Glow
+      el.style.paddingLeft = "10px";
+      el.style.backgroundColor = "rgba(34, 211, 238, 0.05)";
     }
+
+  } catch (e) {
+    console.error("AI Clickbait Detector - Backend Offline or CORS Error:", e);
+    // Silent fail to ensure user experience isn't broken
   }
-});
-
-      if (data.is_clickbait) {
-        // 🔥 Apply Neon Red "DANGER" Glow to Clickbait
-        el.style.transition = "all 0.5s ease-in-out";
-        el.style.boxShadow = "0 0 15px rgba(239, 68, 68, 0.6)";
-        el.style.border = "2px solid #ef4444";
-        el.style.backgroundColor = "rgba(239, 68, 68, 0.05)";
-        el.style.borderRadius = "12px";
-        el.style.padding = "10px";
-
-        // Update Chrome Storage Counter
-        chrome.storage.local.get(['baitBlocked'], (result) => {
-          let count = result.baitBlocked || 0;
-          chrome.storage.local.set({ baitBlocked: count + 1 });
-        });
-      } else {
-        // 🛡️ Apply Subtle Cyan "SAFE" Glow to Verified Content
-        el.style.borderLeft = "4px solid #22d3ee";
-        el.style.paddingLeft = "10px";
-      }
-    } catch (e) {
-      console.error("AI Backend Offline or CORS Error:", e);
-    }
-  });
 }
 
-// Run every 3 seconds to catch new tweets as you scroll
-setInterval(scanHeadlines, 3000);
+// Optimization: Use a small delay so we don't spam the API during page load
+function debounceScan() {
+  const headlines = document.querySelectorAll('h1, h2, h3, .headline, .title'); 
+  headlines.forEach(el => processHeadline(el));
+}
+
+// Initialize scan
+debounceScan();
