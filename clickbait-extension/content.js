@@ -10,13 +10,15 @@ async function scanHeadlines() {
 
     try {
       // Connect to your LIVE Render Backend
-      const response = await fetch("https://clickbait-detector-api-uxg6.onrender.com/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ headline: text })
-      });
-
-      const data = await response.json();
+      // Replace lines 13-20 in your code with this:
+chrome.runtime.sendMessage({ action: "predict", text: text }, (response) => {
+  if (response && response.success) {
+    const data = response.data;
+    if (data.is_clickbait) {
+       // Apply your red glow styles here...
+    }
+  }
+});
 
       if (data.is_clickbait) {
         // 🔥 Apply Neon Red "DANGER" Glow to Clickbait
